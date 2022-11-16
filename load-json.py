@@ -22,9 +22,6 @@ def load_json(jsonfile, portno):
 
     return
 
-#tests
-load_json('dblp-ref-10.json', 27017)
-
 
 
 
