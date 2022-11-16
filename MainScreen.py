@@ -12,8 +12,13 @@ def info_msg(str):
 
 
 class mainScreen():
-    def __init__(self) -> None:
-        # initiate the screen here
+    def __init__(self, db, dblp):
+        self.db = db
+        self.collection = dblp
+        self.article_search_result = []
+        self.article_page = 0
+
+        self.main_screen()
         
     def main_screen(self):
         while True:
