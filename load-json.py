@@ -20,7 +20,7 @@ def load_json(jsonfile, portno):
 
     dblp.insert_many(newdocs)
 
-    return
+    return db, dblp
 
 
 
