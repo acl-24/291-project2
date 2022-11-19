@@ -25,7 +25,7 @@ def load_json(jsonfile, portno):
     dblp.create_index([("title", 1)], name="index_title", unique=False)
     dblp.create_index([("venue", 1)], name="index_venue", unique=False)
     dblp.create_index([("references", 1)], name="index_ref", unique=False)
-    dblp.create_index([("n_citations", 1)], name="index_cit", unique=False)
+    dblp.create_index([("n_citation", 1)], name="index_cit", unique=False)
     dblp.create_index([("abstract", 1)], name="index_abstract", unique=False)
     dblp.create_index([("authors", 1)], name="index_authors", unique=False)
 
