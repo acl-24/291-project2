@@ -1,6 +1,8 @@
 import sys
 import pymongo
 import uuid
+from pymongo.collation import Collation
+import re
 
 def error_msg(str):
     error_str_line = "\n************************\n"
@@ -50,35 +52,15 @@ class mainScreen():
                 print("=====Search for articles=====")
                 text = input("Search text:")
                 if len(text) == 0:
-                    self.article_search_result = []
                     return
-
-                self.article_page = 0
-                keywords = set(text.split(' '))
-
-                # l1 = dblp.find({"$and" : [{"title" : { "$regex" : ".*s.*" }}]})
-                # for x in l1:
-                #     print(x)
-
                 query_word_list = ["title", "authors", "abstract", "venue"]
-                where = []
                 presentable = []
 
                 for query_word in query_word_list:
-                    for keyword in keywords:
-                        if keyword == " " or keyword == '':
-                            continue
-                        
-                        search_word = "(?i)^.*?" + keyword + ".*?$"
-                        query_segment = {query_word : {"$regex" : search_word } }
-                        where.append(query_segment)
-
-                    if len(where) == 0:
-                        return
-
-                    result = {"$and" : where}
-                    result_list = dblp.find(result, {"_id" : 0, "id" : 1, "title" : 1, "year" : 1, "venue" : 1})
-
+                    query_segment = {query_word : text}
+                    result_list = dblp.find(
+                        query_segment, 
+                        {"_id" : 0, "id" : 1, "title" : 1, "year" : 1, "venue" : 1}).collation(Collation(locale= 'en', strength= 2))
                     exist_flag = False
                     for i in result_list:
                         for j in presentable:
@@ -89,11 +71,12 @@ class mainScreen():
                             presentable.append(i)
                         exist_flag = False
                         
-                    where = []
                 
                 try:
-                    keyword_year = int(keywords.pop())
-                    result_year_list = dblp.find({"year" : {"$eq" : keyword_year}}, {"_id" : 0, "id" : 1, "title" : 1, "year" : 1, "venue" : 1})
+                    keyword_year = int(text)
+                    result_year_list = dblp.find(
+                        {"year" : keyword_year}, 
+                        {"_id" : 0, "id" : 1, "title" : 1, "year" : 1, "venue" : 1})
                     exist_flag = False
                     for i in result_year_list:
                         for j in presentable:
@@ -106,18 +89,54 @@ class mainScreen():
                 except Exception:
                     pass
        
-
+                print("==========Search Result==========")
                 for x in presentable:
                     print(x)
 
                 self.select_article(db, dblp, presentable)
 
 
-            # elif option == 2:
-            #     # The user should be able to provide a keyword  and see all authors whose names contain the keyword 
-            #     # (the matches should be case-insensitive). For each author, list the author name and the number of publications.
-            #     #  The user should be able to select an author and see the title, year and venue of all articles by that author. 
-            #     #  The result should be sorted based on year with more recent articles shown first.
+            elif option == 2:
+                # The user should be able to provide a keyword  and see all authors whose names contain the keyword 
+                # (the matches should be case-insensitive). For each author, list the author name and the number of publications.
+                #  The user should be able to select an author and see the title, year and venue of all articles by that author. 
+                #  The result should be sorted based on year with more recent articles shown first.
+                print("=====Search for authors=====")
+                text = input("Search text:")
+                if len(text) == 0:
+                    return
+                author_result = dblp.find(
+                    {"$text": {"$search": text}},
+                    {"_id" : 0, "authors" : 1}
+                    )
+
+                author_list = []
+                for x in author_result:
+                    for y in x['authors']:
+                        if re.search(text, y, re.IGNORECASE):
+                            if y not in author_list:
+                                author_list.append(y)
+
+
+                print("==========Search Result==========")
+                presentable = []
+                for i in author_list:
+                    result = dblp.aggregate(
+                        [
+                            {"$match" : {"authors" : i}},
+                            {"$unwind" : "$authors"},
+                            {"$match" : {"authors" : i}},
+                            {"$group": {"_id" : "$authors", "n_wrote" : {"$sum" : 1}}}
+                        ]
+                    )
+
+                    for x in result:
+                        presentable.append(x)
+
+                for x in presentable:
+                        print(x)
+                
+                self.select_author(db, dblp, presentable)
 
             # elif option == 3:
             #     # The user should be able to enter a number n and see a listing of top n venues. For each venue, list the venue, 
@@ -131,7 +150,9 @@ class mainScreen():
                 print("=====Add Article: =====")
                 self.add_article()
             
-
+            elif option == 5:
+                return
+            
             else:
                 error_msg("Error: Invalid input")
 
@@ -166,6 +187,36 @@ class mainScreen():
                     for x in reference_result:
                         print(x)
 
+            elif option == 2:
+                return
+
+            else:
+                error_msg("Error: Invalid input")
+                
+    def select_author(self, db, dblp, presentable):
+        while True:
+            print('''
+                ==============options=============
+                |   [1.Select               ]    |
+                |   [2.Back                 ]    |
+                ==================================
+                ''')
+
+            option = int(input("Enter the choice you would like to select: "))
+            if option == 1:
+                select = int(input("Enter the index of the item you want to choose: "))
+                if select>len(presentable) or select<=0:
+                    error_msg("Error: Invalid input")
+                else:
+                    print("=========Get more information=========")
+                    selected_id = presentable[select - 1]["_id"]
+                    select_result = dblp.find(
+                        {"authors" : selected_id}, 
+                        {"_id" : 0, "title" : 1, "year" : 1, "venue" : 1}
+                        ).sort("year", pymongo.ASCENDING)
+                    for x in select_result:
+                        print(x)
+                    
             elif option == 2:
                 return
 
