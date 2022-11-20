@@ -124,10 +124,13 @@ class mainScreen():
             #     # the number of articles in that venue, and the number of articles that reference a paper in that venue. 
             #     # Sort the result based on the number of papers that reference the venue with the top most cited venues shown first. 
             
-            # elif option == 4:
+            elif option == 4:
             #     # The user should be able to add an article to the collection by providing a unique id, a title, a list of authors, 
             #     # and a year. The fields abstract and venue should be set to null, references should be set to an empty array and 
             #     # n_citations should be set to zero. 
+                print("=====Add Article: =====")
+                self.add_article()
+            
 
             else:
                 error_msg("Error: Invalid input")
@@ -168,9 +171,63 @@ class mainScreen():
 
             else:
                 error_msg("Error: Invalid input")
+          
+    def add_article(self):
+       while True:
+            print("NOTE: separate author names by commas, no spaces")
+            inputlist = ["id", "title", "year", "authors"]
+            results = [0,0,0,0]
+            flag = 0
+            for i in range(4):
+                string = inputlist[i] + " of the article: "
+                invalue = input(string)
+                if (len(invalue) == 0):
+                    print("Invalid entry,")
+                    u = input("press a to try again, or anything to exit: ")
+                    if (u == "a"):
+                        flag = 1
+                        break 
+                    else:
+                        flag = 2 
+                        break
 
+                results[i] = invalue
 
-        
+            if (flag == 1):
+                continue
+            elif (flag == 2):
+                break
+
+            results[3] = results[3].split(",")
+
+            ndoc = {}
+            testdoc = {}
+            for j in range(4):
+                ndoc[inputlist[j]] = results[j] 
+
+            ndoc["abstract"] = None
+            ndoc["n_citations"] = 0
+            ndoc["references"] = []
+            ndoc["venue"] = None
+
+            testdoc = {}
+            testdoc[inputlist[0]] = results[0] 
+            x = self.dblp.find_one(testdoc)
+            if (x != None):
+                print("Article is already in database")
+                z = input("Type a to insert another article, or anything else to exit: ")
+                if (z == "a"):
+                    continue
+                else:
+                    break
+
+            else:
+                self.dblp.insert_one(ndoc)
+                print("Successfully Added")
+                break
+       return
+
+      
         
             
 
