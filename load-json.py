@@ -29,6 +29,7 @@ def load_json(jsonfile, portno):
     dblp.create_index([("n_citation", 1)], name="index_cit", unique=False, collation=Collation(locale= 'en', strength= 2))
     dblp.create_index([("abstract", 1)], name="index_abstract", unique=False, collation=Collation(locale= 'en', strength= 2))
     dblp.create_index([("authors", 1)], name="index_authors", unique=False, collation=Collation(locale= 'en', strength= 2))
+    dblp.create_index([("authors", 'text')], name="index_authors_text", unique=False)
 
 
     return db, dblp
